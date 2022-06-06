@@ -2,9 +2,10 @@ from datetime import datetime, timedelta
 from flask import Flask, Response, jsonify, request
 from flask_cors import CORS
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
-from web_server.src.firebase import ReviewController
-from web_server.src.model import Review
-import os
+
+from src.firebase import ReviewController
+from src.model import Review
+
 
 tokenizer = AutoTokenizer.from_pretrained("avichr/heBERT_sentiment_analysis")
 

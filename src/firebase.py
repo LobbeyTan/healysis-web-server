@@ -4,7 +4,7 @@ from firebase_admin import credentials, firestore
 from google.cloud.firestore_v1.client import Client
 from google.cloud.firestore_v1.collection import CollectionReference
 
-from web_server.src.model import Review
+from src.model import Review
 
 cred = credentials.Certificate(
     "./resources/healysis-firebase-adminsdk-4wiie-475fa59222.json",
