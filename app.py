@@ -28,6 +28,11 @@ app = Flask(__name__)
 CORS(app)
 
 
+@app.route("/")
+def welcome():
+    return "Hello Welcome"
+
+
 @app.route("/predict", methods=['POST'])
 def predict_sentiment():
     if request.method == 'POST':
