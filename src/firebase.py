@@ -29,7 +29,7 @@ class ReviewController:
 
         return Review.fromSnapshot(self.collection.document(id).get())
 
-    def getReviewsInRange(self, start: datetime, stop: datetime) -> list[Review]:
+    def getReviewsInRange(self, start: datetime, stop: datetime):
         start = int(start.timestamp() * (10 ** 6))
         stop = int(stop.timestamp() * (10 ** 6))
 
