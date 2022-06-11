@@ -2,21 +2,32 @@ from datetime import datetime, timedelta
 from flask import Flask, Response, jsonify, request
 from flask_cors import CORS
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
-
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
 from src.firebase import ReviewController
+from collections import Counter
 from src.model import Review
+import nltk
 
+nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+nltk.download('punkt')
+
+stopwords = stopwords.words('english')
+lematizer = WordNetLemmatizer()
 
 tokenizer = AutoTokenizer.from_pretrained("avichr/heBERT_sentiment_analysis")
 
 model = AutoModelForSequenceClassification.from_pretrained(
-    "avichr/heBERT_sentiment_analysis"
+    "./resources/model/NLP model"
 )
 
 sentiment_analysis = pipeline(
     "sentiment-analysis",
-    model="avichr/heBERT_sentiment_analysis",
-    tokenizer="avichr/heBERT_sentiment_analysis",
+    model=model,
+    tokenizer=tokenizer,
     return_all_scores=True
 )
 
@@ -43,7 +54,7 @@ def predict_sentiment():
 
 @app.route("/analysis", methods=['GET'])
 def getReviewAnalysis():
-    stop = datetime.now() + timedelta(days=3)
+    stop = datetime.now() + timedelta(days=5)
     start = datetime(stop.year, stop.month, stop.day)
 
     reviews_per_day: list[list[Review]] = []
@@ -73,8 +84,24 @@ def getReviewAnalysis():
         'neu': [0.00] * 7,
     }
 
+    negative_words = []
+    positive_words = []
+
+    def preprocess_text(text: str):
+        text = text.lower()
+
+        return [lematizer.lemmatize(x) for x in word_tokenize(text)
+                if (len(x) > 2 and x not in stopwords)]
+
     for i in range(7):
         for review in reviews_per_day[i]:
+            if review.highestLabel == "pos":
+                positive_words += preprocess_text(review.text)
+            elif review.highestLabel == "neg":
+                negative_words += preprocess_text(review.text)
+            else:
+                pass
+
             score = review.sentimentScore.toMap()
 
             for key, val in score.items():
@@ -89,10 +116,15 @@ def getReviewAnalysis():
         if average_sentiment[key] != 0:
             average_sentiment[key] /= total
 
+    neg_count = list(Counter(negative_words).most_common(15))
+    pos_count = list(Counter(positive_words).most_common(15))
+
     return {
         "total_reviews": total,
         "reviews": [[review.toMap() for review in reviews] for reviews in reviews_per_day],
         "counts_per_day": counts_per_day,
         "average_sentiment": average_sentiment,
         "sentiment_distribution_per_day": sentiment_distribution_per_day,
+        "pos_count": pos_count,
+        "neg_count": neg_count,
     }
