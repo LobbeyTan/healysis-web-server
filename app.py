@@ -8,12 +8,13 @@ from nltk.stem import WordNetLemmatizer
 from src.firebase import ReviewController
 from collections import Counter
 from src.model import Review
+import requests
 import nltk
 
-nltk.download('stopwords')
-nltk.download('wordnet')
-nltk.download('omw-1.4')
-nltk.download('punkt')
+# nltk.download('stopwords')
+# nltk.download('wordnet')
+# nltk.download('omw-1.4')
+# nltk.download('punkt')
 
 stopwords = stopwords.words('english')
 lematizer = WordNetLemmatizer()
@@ -21,7 +22,7 @@ lematizer = WordNetLemmatizer()
 tokenizer = AutoTokenizer.from_pretrained("avichr/heBERT_sentiment_analysis")
 
 model = AutoModelForSequenceClassification.from_pretrained(
-    "./resources/model/NLP model"
+    "./resources/model"
 )
 
 sentiment_analysis = pipeline(
@@ -52,9 +53,21 @@ def predict_sentiment():
         return Response("/predict endpoint only support POST method", 405)
 
 
+@app.route("/stt", methods=['POST'])
+def speechToText():
+    if request.method == 'POST':
+        blob_url = request.form['blobUrl'].split(":", maxsplit=1)[-1]
+        print(blob_url)
+        data = requests.get(blob_url)
+        print(data.content)
+        return {}
+    else:
+        return Response("/predict endpoint only support POST method", 405)
+
+
 @app.route("/analysis", methods=['GET'])
 def getReviewAnalysis():
-    stop = datetime.now() + timedelta(days=5)
+    stop = datetime.now()  # + timedelta(days=4)
     start = datetime(stop.year, stop.month, stop.day)
 
     reviews_per_day: list[list[Review]] = []
